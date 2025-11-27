@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: orkio-backend-v4-5
+    env: python
+    plan: starter
+    region: oregon
+    buildCommand: "pip install -r requirements.txt && alembic upgrade head"
+    startCommand: "sh start.sh"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
+      - key: DATABASE_URL
+        scope: build,runtime
+      - key: JWT_SECRET
+        scope: build,runtime
+      - key: OPENAI_API_KEY
+        scope: runtime
+      - key: OPENAI_MODEL_DEFAULT
+        value: "gpt-4.1-mini"
+        scope: runtime
+      - key: ALLOWED_MODELS
+        value: '["gpt-4.1-mini","gpt-4.1-nano","gemini-2.5-flash"]'
+        scope: runtime
+      - key: FILE_STORAGE_PATH
+        value: "/tmp/orkio-files"
+        scope: runtime
+      - key: ALLOW_ORIGINS
+        value: '["http://localhost:3000"]'
+        scope: runtime
+      - key: ENVIRONMENT
+        value: "production"
+        scope: runtime
