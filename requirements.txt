@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy>=2.0.20
+alembic>=1.13.1
+psycopg[binary]==3.2.1
+python-dotenv
+passlib[bcrypt]
+python-multipart
+bcrypt
+pydantic
+jinja2
+pgvector
+openai
+supabase

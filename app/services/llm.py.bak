@@ -1,0 +1,23 @@
+from openai import OpenAI
+import os
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", "sk-dummy"))
+
+DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+def run_llm(prompt: str, system: str | None = None) -> str:
+    """Execute LLM completion with OpenAI"""
+    msgs = [{"role": "user", "content": prompt}]
+    if system:
+        msgs = [{"role": "system", "content": system}] + msgs
+    
+    try:
+        resp = client.chat.completions.create(
+            model=DEFAULT_MODEL, 
+            messages=msgs, 
+            temperature=0.2
+        )
+        return resp.choices[0].message.content.strip()
+    except Exception as e:
+        # Fallback para stub se OpenAI falhar
+        return f"[STUB] Response to: {prompt[:50]}..."
