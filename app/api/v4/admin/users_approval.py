@@ -1,13 +1,14 @@
 """
 Rotas Admin v4 - User Approval
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.models.models import User, Membership
 from app.core.auth_v4 import get_current_user, CurrentUser
+from app.core.audit import log_audit, AuditAction
 
 router = APIRouter()
 
@@ -59,6 +60,7 @@ def list_pending_users(
 @router.post("/users/{user_id}/approve", response_model=dict)
 def approve_user(
     user_id: int,
+    request: Request,
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -88,6 +90,18 @@ def approve_user(
     user.is_approved = True
     db.commit()
     
+    # Log audit
+    log_audit(
+        db=db,
+        action=AuditAction.USER_APPROVED,
+        user_id=current_user.user_id,
+        tenant_id=current_user.tenant_id,
+        resource_type="user",
+        resource_id=user.id,
+        metadata={"approved_user_email": user.email},
+        request=request
+    )
+    
     return {
         "message": "User approved successfully",
         "user": {
@@ -101,6 +115,7 @@ def approve_user(
 @router.post("/users/{user_id}/reject", response_model=dict)
 def reject_user(
     user_id: int,
+    request: Request,
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -128,6 +143,18 @@ def reject_user(
     # Rejeitar usuário (marcar como REJECTED ou deletar)
     user.status = "REJECTED"
     db.commit()
+    
+    # Log audit
+    log_audit(
+        db=db,
+        action=AuditAction.USER_REJECTED,
+        user_id=current_user.user_id,
+        tenant_id=current_user.tenant_id,
+        resource_type="user",
+        resource_id=user.id,
+        metadata={"rejected_user_email": user.email},
+        request=request
+    )
     
     # Opcional: deletar usuário rejeitado
     # db.delete(user)

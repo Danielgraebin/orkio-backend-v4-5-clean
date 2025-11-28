@@ -1,7 +1,7 @@
 """
 Admin endpoints for Tenant management (CRUD)
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
@@ -10,6 +10,7 @@ from datetime import datetime
 from app.core.database import get_db
 from app.models.models import Tenant, User
 from app.api.v4.auth import get_current_user
+from app.core.audit import log_audit, AuditAction
 
 router = APIRouter()
 
@@ -67,6 +68,7 @@ def require_admin(user: User):
 @router.post("/tenants", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 def create_tenant(
     tenant_data: TenantCreate,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
@@ -103,6 +105,17 @@ def create_tenant(
     db.add(new_tenant)
     db.commit()
     db.refresh(new_tenant)
+    
+    # Log audit
+    log_audit(
+        db=db,
+        action=AuditAction.TENANT_CREATED,
+        user_id=user.id,
+        resource_type="tenant",
+        resource_id=new_tenant.id,
+        metadata={"tenant_name": new_tenant.name, "slug": new_tenant.slug},
+        request=request
+    )
     
     return new_tenant
 
@@ -160,6 +173,7 @@ def get_tenant(
 def update_tenant(
     tenant_id: int,
     tenant_data: TenantUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
@@ -215,6 +229,28 @@ def update_tenant(
     
     db.commit()
     db.refresh(tenant)
+    
+    # Log audit
+    changes = {}
+    if tenant_data.name is not None:
+        changes["name"] = tenant_data.name
+    if tenant_data.slug is not None:
+        changes["slug"] = tenant_data.slug
+    if tenant_data.is_active is not None:
+        action = AuditAction.TENANT_ACTIVATED if tenant_data.is_active else AuditAction.TENANT_DEACTIVATED
+        changes["is_active"] = tenant_data.is_active
+    else:
+        action = AuditAction.TENANT_UPDATED
+    
+    log_audit(
+        db=db,
+        action=action,
+        user_id=user.id,
+        resource_type="tenant",
+        resource_id=tenant.id,
+        metadata={"tenant_name": tenant.name, "changes": changes},
+        request=request
+    )
     
     return tenant
 

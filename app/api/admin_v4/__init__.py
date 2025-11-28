@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.v4 import llm_providers, auth, files
-from app.api.v4.admin import agents, users_approval, users, tenants
+from app.api.v4.admin import agents, users_approval, users, tenants, audit_logs
 
 admin_v4_router = APIRouter()
 
@@ -11,4 +11,5 @@ admin_v4_router.include_router(files.router, prefix="/files", tags=["files"])
 admin_v4_router.include_router(users.router, tags=["admin-users"])
 admin_v4_router.include_router(users_approval.router, tags=["admin-users"])
 admin_v4_router.include_router(tenants.router, tags=["admin-tenants"])
+admin_v4_router.include_router(audit_logs.router, tags=["admin-audit"])
 
