@@ -79,16 +79,16 @@ def update_user_role(
 ):
     """
     Atualiza o papel (role) de um usuário no tenant.
-    Apenas OWNER pode executar.
+    Apenas OWNER, ADMIN ou SUPERADMIN podem executar.
     """
-    # Verificar se current_user é OWNER
+    # Verificar se current_user é OWNER, ADMIN ou SUPERADMIN
     current_membership = db.query(Membership).filter(
         Membership.user_id == current_user.user_id,
         Membership.tenant_id == current_user.tenant_id
     ).first()
     
-    if not current_membership or current_membership.role != "OWNER":
-        raise HTTPException(status_code=403, detail="Forbidden: Only OWNER can change roles")
+    if not current_membership or current_membership.role not in ["OWNER", "ADMIN", "SUPERADMIN"]:
+        raise HTTPException(status_code=403, detail="Forbidden: Only OWNER, ADMIN or SUPERADMIN can change roles")
     
     # Buscar membership do usuário alvo
     target_membership = db.query(Membership).filter(
@@ -100,7 +100,7 @@ def update_user_role(
         raise HTTPException(status_code=404, detail="User not found in this tenant")
     
     # Validar role
-    if request.role not in ["OWNER", "ADMIN", "USER"]:
+    if request.role not in ["OWNER", "ADMIN", "USER", "SUPERADMIN"]:
         raise HTTPException(status_code=400, detail="Invalid role")
     
     # Atualizar
