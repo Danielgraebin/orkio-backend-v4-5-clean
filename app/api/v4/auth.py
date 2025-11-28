@@ -84,6 +84,14 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
             detail="Usuário não possui tenant associado"
         )
     
+    # Verificar se o tenant está ativo
+    tenant = db.query(Tenant).filter(Tenant.id == membership.tenant_id).first()
+    if not tenant or not tenant.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seu tenant foi desativado. Entre em contato com o suporte."
+        )
+    
     # Criar token JWT
     token_data = {
         "user_id": user.id,

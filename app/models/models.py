@@ -17,7 +17,12 @@ class Tenant(Base):
     __tablename__ = "tenants"
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True)
+    slug = Column(String(100), nullable=False, unique=True)
+    is_active = Column(Boolean, server_default="true", nullable=False)
+    default_provider = Column(String(50), nullable=True)  # openai, anthropic, google, etc.
+    allowed_models = Column(JSON, nullable=True)  # Lista de modelos permitidos para este tenant
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
     memberships = relationship("Membership", back_populates="tenant")
     agents = relationship("Agent", back_populates="tenant")
