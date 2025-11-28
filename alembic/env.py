@@ -12,8 +12,10 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set")
 
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
+print(f"🔍 Alembic is using DB URL: {DATABASE_URL[:80]}...")
 
 from app.core.database import Base
+from app import models  # noqa - Importa todos os modelos para registrar em Base.metadata
 
 target_metadata = Base.metadata
 
@@ -49,3 +51,9 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
