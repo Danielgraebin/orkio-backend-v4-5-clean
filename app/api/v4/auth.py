@@ -32,6 +32,7 @@ class LoginResponse(BaseModel):
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
+    tenant_id: int = 1
 
 
 class RegisterResponse(BaseModel):
@@ -122,12 +123,12 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
             detail="Senha deve ter no mínimo 6 caracteres"
         )
     
-    # Buscar tenant PATRO (ID=1)
-    tenant = db.query(Tenant).filter(Tenant.id == 1).first()
+    # Validar se o tenant_id existe
+    tenant = db.query(Tenant).filter(Tenant.id == req.tenant_id).first()
     if not tenant:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Tenant PATRO não encontrado. Contate o administrador."
+            detail="Invalid tenant_id"
         )
     
     # Criar usuário com status PENDING (aguardando aprovação)
