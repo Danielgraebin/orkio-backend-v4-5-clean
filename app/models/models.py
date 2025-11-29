@@ -172,3 +172,34 @@ class MultiagentMessage(Base):
     
     session = relationship("MultiagentSession", back_populates="messages")
 
+# ===== LLM PROVIDERS & MODELS =====
+
+class LLMProvider(Base):
+    __tablename__ = "llm_providers"
+    id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    name = Column(String(100), nullable=False)  # OpenAI, Anthropic, Google, etc.
+    provider_type = Column(String(50), nullable=False)  # openai, anthropic, google, manus
+    api_key_encrypted = Column(Text, nullable=True)  # Encrypted API key
+    api_base_url = Column(Text, nullable=True)  # Custom base URL (optional)
+    is_active = Column(Boolean, server_default="true", nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    
+    models = relationship("LLMModel", back_populates="provider")
+
+class LLMModel(Base):
+    __tablename__ = "llm_models"
+    id = Column(Integer, primary_key=True)
+    provider_id = Column(Integer, ForeignKey("llm_providers.id"), nullable=False)
+    name = Column(String(100), nullable=False)  # Display name (e.g., "GPT-4.1 Mini")
+    model_id = Column(String(100), nullable=False)  # API model ID (e.g., "gpt-4.1-mini")
+    max_tokens = Column(Integer, nullable=True)
+    cost_per_1k_input_tokens = Column(Float, nullable=True)
+    cost_per_1k_output_tokens = Column(Float, nullable=True)
+    is_active = Column(Boolean, server_default="true", nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    
+    provider = relationship("LLMProvider", back_populates="models")
+
