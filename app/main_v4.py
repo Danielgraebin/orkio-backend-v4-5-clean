@@ -12,7 +12,7 @@ from app.core.security import get_password_hash
 
 # Importar rotas v4
 from app.api.v4 import auth, agents, conversations, chat, password_reset
-from app.api.v4.admin import users as admin_users, agents as admin_agents, documents as admin_documents, agent_links as admin_agent_links, users_approval as admin_users_approval
+from app.api.v4.admin import users as admin_users, agents as admin_agents, documents as admin_documents, agent_links as admin_agent_links, users_approval as admin_users_approval, tenants as admin_tenants, audit_logs as admin_audit_logs
 
 app = FastAPI(
     title="ORKIO API v4.0",
@@ -52,6 +52,8 @@ app.include_router(admin_users_approval.router, prefix=settings.API_V1_STR, tags
 app.include_router(admin_agents.router, prefix=settings.API_V1_STR, tags=["admin-agents"])
 app.include_router(admin_documents.router, prefix=settings.API_V1_STR, tags=["admin-documents"])
 app.include_router(admin_agent_links.router, prefix=settings.API_V1_STR, tags=["admin-agent-links"])
+app.include_router(admin_tenants.router, prefix=settings.API_V1_STR, tags=["admin-tenants"])
+app.include_router(admin_audit_logs.router, prefix=settings.API_V1_STR, tags=["admin-audit-logs"])
 
 
 @app.get(f"{settings.API_V1_STR}/health")
