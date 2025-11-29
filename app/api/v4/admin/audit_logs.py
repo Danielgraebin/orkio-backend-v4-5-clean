@@ -10,7 +10,7 @@ from datetime import datetime
 from app.core.database import get_db
 from app.models.audit_log import AuditLog
 from app.models.models import User
-from app.api.v4.auth import get_current_user
+from app.core.auth_v4 import get_current_user
 
 router = APIRouter()
 
