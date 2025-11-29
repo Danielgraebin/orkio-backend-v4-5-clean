@@ -16,7 +16,7 @@ class AuditLog(Base):
     action = Column(String(100), nullable=False, index=True)
     resource_type = Column(String(50), nullable=True)
     resource_id = Column(Integer, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)
     ip_address = Column(String(50), nullable=True)
     user_agent = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)

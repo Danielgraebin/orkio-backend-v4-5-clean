@@ -14,7 +14,7 @@ def log_audit(
     tenant_id: Optional[int] = None,
     resource_type: Optional[str] = None,
     resource_id: Optional[int] = None,
-    metadata: Optional[Dict[str, Any]] = None,
+    extra_data: Optional[Dict[str, Any]] = None,
     request: Optional[Request] = None
 ):
     """
@@ -27,7 +27,7 @@ def log_audit(
         tenant_id: ID of the tenant affected
         resource_type: Type of resource (e.g., "user", "agent", "tenant")
         resource_id: ID of the resource affected
-        metadata: Additional metadata as JSON
+        extra_data: Additional metadata as JSON
         request: FastAPI request object to extract IP and user agent
     """
     ip_address = None
@@ -43,7 +43,7 @@ def log_audit(
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
-        metadata=metadata,
+        extra_data=extra_data,
         ip_address=ip_address,
         user_agent=user_agent
     )

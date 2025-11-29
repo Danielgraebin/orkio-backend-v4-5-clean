@@ -85,7 +85,7 @@ def list_audit_logs(
             "action": log.action,
             "resource_type": log.resource_type,
             "resource_id": log.resource_id,
-            "metadata": log.metadata,
+            "extra_data": log.extra_data,
             "ip_address": log.ip_address,
             "created_at": log.created_at.isoformat()
         }
