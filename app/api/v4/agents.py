@@ -72,13 +72,13 @@ def list_agents(
         result.append({
             "id": agent.id,
             "name": agent.name,
-            "description": agent.description,
+            "description": None,  # Column doesn't exist in DB
             "system_prompt": agent.system_prompt,
             "provider": agent.provider or "openai",
             "model": agent.model or "gpt-4",
             "temperature": agent.temperature or 0.7,
-            "max_tokens": agent.max_tokens,
-            "is_active": agent.is_active if hasattr(agent, 'is_active') else True,
+            "max_tokens": None,  # Column doesn't exist in DB
+            "is_active": True,  # Column doesn't exist in DB, default to True
             "created_at": agent.created_at.isoformat() if agent.created_at else "",
         })
     
@@ -113,21 +113,18 @@ def create_agent(
     provider_slug = provider_result[1]
     model_id_str = model_result[1]
     
-    # Create agent
+    # Create agent (only use columns that exist in DB)
     agent = Agent(
         tenant_id=current_user.tenant_id,
         name=request.name,
-        description=request.description,
+        # description - column doesn't exist
         system_prompt=request.system_prompt,
         provider=provider_slug,
         model=model_id_str,
         temperature=request.temperature,
-        max_tokens=request.max_tokens,
+        # max_tokens - column doesn't exist
+        # is_active - column doesn't exist
     )
-    
-    # Add is_active if the column exists
-    if hasattr(Agent, 'is_active'):
-        agent.is_active = request.is_active
     
     db.add(agent)
     db.commit()
@@ -136,13 +133,13 @@ def create_agent(
     return {
         "id": agent.id,
         "name": agent.name,
-        "description": agent.description,
+        "description": None,  # Column doesn't exist
         "system_prompt": agent.system_prompt,
         "provider": agent.provider,
         "model": agent.model,
         "temperature": agent.temperature,
-        "max_tokens": agent.max_tokens,
-        "is_active": agent.is_active if hasattr(agent, 'is_active') else True,
+        "max_tokens": None,  # Column doesn't exist
+        "is_active": True,  # Column doesn't exist, default to True
         "created_at": agent.created_at.isoformat() if agent.created_at else "",
     }
 
@@ -165,33 +162,34 @@ def update_agent(
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
     
-    # Update fields
+    # Update fields (only columns that exist in DB)
     if request.name is not None:
         agent.name = request.name
-    if request.description is not None:
-        agent.description = request.description
+    # description - column doesn't exist, skip
     if request.system_prompt is not None:
         agent.system_prompt = request.system_prompt
     if request.temperature is not None:
         agent.temperature = request.temperature
-    if request.max_tokens is not None:
-        agent.max_tokens = request.max_tokens
-    if request.is_active is not None and hasattr(agent, 'is_active'):
-        agent.is_active = request.is_active
+    # max_tokens - column doesn't exist, skip
+    # is_active - column doesn't exist, skip
     
     # Update provider and model if provided
     if request.provider_id is not None or request.model_id is not None:
-        from app.models.models import LLMProvider, LLMModel
+        from sqlalchemy import text
         
         if request.provider_id:
-            provider = db.query(LLMProvider).filter(LLMProvider.id == request.provider_id).first()
-            if provider:
-                agent.provider = provider.slug
+            provider_result = db.execute(text("""
+                SELECT id, slug FROM llm_providers WHERE id = :provider_id
+            """), {"provider_id": request.provider_id}).first()
+            if provider_result:
+                agent.provider = provider_result[1]
         
         if request.model_id:
-            model = db.query(LLMModel).filter(LLMModel.id == request.model_id).first()
-            if model:
-                agent.model = model.model_id
+            model_result = db.execute(text("""
+                SELECT id, model_id FROM llm_models WHERE id = :model_id
+            """), {"model_id": request.model_id}).first()
+            if model_result:
+                agent.model = model_result[1]
     
     db.commit()
     db.refresh(agent)
@@ -199,13 +197,13 @@ def update_agent(
     return {
         "id": agent.id,
         "name": agent.name,
-        "description": agent.description,
+        "description": None,  # Column doesn't exist
         "system_prompt": agent.system_prompt,
         "provider": agent.provider,
         "model": agent.model,
         "temperature": agent.temperature,
-        "max_tokens": agent.max_tokens,
-        "is_active": agent.is_active if hasattr(agent, 'is_active') else True,
+        "max_tokens": None,  # Column doesn't exist
+        "is_active": True,  # Column doesn't exist, default to True
         "created_at": agent.created_at.isoformat() if agent.created_at else "",
     }
 
