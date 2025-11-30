@@ -5,13 +5,14 @@ POST /api/v1/u/agents - Cria novo agente
 PATCH /api/v1/u/agents/{agent_id} - Atualiza agente
 DELETE /api/v1/u/agents/{agent_id} - Deleta agente
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typing import List, Optional
 from app.core.database import get_db
 from app.models.models import Agent
 from app.core.auth_v4 import get_current_user, CurrentUser
+import json
 
 router = APIRouter()
 
@@ -86,17 +87,27 @@ def list_agents(
 
 
 @router.post("/agents", response_model=AgentResponse)
-def create_agent(
-    request: CreateAgentRequest,
+async def create_agent(
+    http_request: Request,
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Cria um novo agente para o tenant do usuário
     """
-    # DEBUG: Log request data
-    print(f"[DEBUG CREATE_AGENT] Request data: {request.dict()}")
-    print(f"[DEBUG CREATE_AGENT] Current user: user_id={current_user.user_id}, tenant_id={current_user.tenant_id}, role={current_user.role}")
+    # DEBUG: Log raw request body
+    try:
+        body = await http_request.json()
+        print(f"[DEBUG CREATE_AGENT] Raw body: {json.dumps(body, indent=2)}")
+        print(f"[DEBUG CREATE_AGENT] Current user: user_id={current_user.user_id}, tenant_id={current_user.tenant_id}, role={current_user.role}")
+        request = CreateAgentRequest(**body)
+        print(f"[DEBUG CREATE_AGENT] Validated request: {request.dict()}")
+    except ValidationError as e:
+        print(f"[DEBUG CREATE_AGENT] Validation error: {e.json()}")
+        raise HTTPException(status_code=422, detail=e.errors())
+    except Exception as e:
+        print(f"[DEBUG CREATE_AGENT] Unexpected error: {str(e)}")
+        raise
     
     # Get provider and model names from IDs using SQL
     from sqlalchemy import text
