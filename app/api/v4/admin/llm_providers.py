@@ -63,14 +63,26 @@ def decrypt_api_key(encrypted_key: str) -> str:
 
 def check_admin_permission(current_user: User, db: Session):
     """Check if user has ADMIN or SUPERADMIN role"""
-    membership = db.query(Membership).filter(
-        Membership.user_id == current_user.id
-    ).first()
+    # Use SQL puro para melhor performance
+    query = text("""
+        SELECT tenant_id, role 
+        FROM memberships 
+        WHERE user_id = :user_id
+        LIMIT 1
+    """)
     
-    if not membership or membership.role not in ["ADMIN", "SUPERADMIN", "OWNER"]:
+    result = db.execute(query, {"user_id": current_user.id}).first()
+    
+    if not result or result[1] not in ["ADMIN", "SUPERADMIN", "OWNER"]:
         raise HTTPException(status_code=403, detail="Forbidden: Only ADMIN, SUPERADMIN or OWNER can manage LLM providers")
     
-    return membership
+    # Retornar objeto com tenant_id e role
+    class MembershipData:
+        def __init__(self, tenant_id, role):
+            self.tenant_id = tenant_id
+            self.role = role
+    
+    return MembershipData(result[0], result[1])
 
 # ===== PROVIDERS ENDPOINTS =====
 
