@@ -94,16 +94,24 @@ def create_agent(
     """
     Cria um novo agente para o tenant do usuário
     """
-    # Get provider and model names from IDs
-    from app.models.models import LLMProvider, LLMModel
+    # Get provider and model names from IDs using SQL
+    from sqlalchemy import text
     
-    provider = db.query(LLMProvider).filter(LLMProvider.id == request.provider_id).first()
-    model = db.query(LLMModel).filter(LLMModel.id == request.model_id).first()
+    provider_result = db.execute(text("""
+        SELECT id, slug FROM llm_providers WHERE id = :provider_id
+    """), {"provider_id": request.provider_id}).first()
     
-    if not provider:
+    model_result = db.execute(text("""
+        SELECT id, model_id FROM llm_models WHERE id = :model_id
+    """), {"model_id": request.model_id}).first()
+    
+    if not provider_result:
         raise HTTPException(status_code=404, detail="Provider not found")
-    if not model:
+    if not model_result:
         raise HTTPException(status_code=404, detail="Model not found")
+    
+    provider_slug = provider_result[1]
+    model_id_str = model_result[1]
     
     # Create agent
     agent = Agent(
@@ -111,8 +119,8 @@ def create_agent(
         name=request.name,
         description=request.description,
         system_prompt=request.system_prompt,
-        provider=provider.slug,
-        model=model.model_id,
+        provider=provider_slug,
+        model=model_id_str,
         temperature=request.temperature,
         max_tokens=request.max_tokens,
     )
