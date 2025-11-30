@@ -71,7 +71,7 @@ def check_admin_permission(current_user: User, db: Session):
         LIMIT 1
     """)
     
-    result = db.execute(query, {"user_id": current_user.id}).first()
+    result = db.execute(query, {"user_id": current_user.user_id}).first()
     
     if not result or result[1] not in ["ADMIN", "SUPERADMIN", "OWNER"]:
         raise HTTPException(status_code=403, detail="Forbidden: Only ADMIN, SUPERADMIN or OWNER can manage LLM providers")
