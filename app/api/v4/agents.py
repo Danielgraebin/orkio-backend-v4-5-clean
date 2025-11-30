@@ -94,6 +94,10 @@ def create_agent(
     """
     Cria um novo agente para o tenant do usuário
     """
+    # DEBUG: Log request data
+    print(f"[DEBUG CREATE_AGENT] Request data: {request.dict()}")
+    print(f"[DEBUG CREATE_AGENT] Current user: user_id={current_user.user_id}, tenant_id={current_user.tenant_id}, role={current_user.role}")
+    
     # Get provider and model names from IDs using SQL
     from sqlalchemy import text
     
@@ -106,14 +110,18 @@ def create_agent(
     """), {"model_id": request.model_id}).first()
     
     if not provider_result:
+        print(f"[DEBUG CREATE_AGENT] Provider not found: provider_id={request.provider_id}")
         raise HTTPException(status_code=404, detail="Provider not found")
     if not model_result:
+        print(f"[DEBUG CREATE_AGENT] Model not found: model_id={request.model_id}")
         raise HTTPException(status_code=404, detail="Model not found")
     
     provider_slug = provider_result[1]
     model_id_str = model_result[1]
+    print(f"[DEBUG CREATE_AGENT] Found provider: {provider_slug}, model: {model_id_str}")
     
     # Create agent (only use columns that exist in DB)
+    print(f"[DEBUG CREATE_AGENT] Creating agent with: tenant_id={current_user.tenant_id}, name={request.name}, provider={provider_slug}, model={model_id_str}, temperature={request.temperature}")
     agent = Agent(
         tenant_id=current_user.tenant_id,
         name=request.name,
